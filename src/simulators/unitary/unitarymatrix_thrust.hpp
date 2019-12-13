@@ -15,12 +15,12 @@
 #ifndef _qv_unitary_matrix_hpp_
 #define _qv_unitary_matrix_hpp_
 
-#ifdef AER_THRUST_CUDA
+/*#ifdef AER_THRUST_CUDA
 #include <cuda.h>
 #include <cuda_runtime.h>
-#endif
+#endif*/
 
-#include <thrust/for_each.h>
+/*#include <thrust/for_each.h>
 #include <thrust/complex.h>
 #include <thrust/inner_product.h>
 #include <thrust/transform.h>
@@ -31,7 +31,9 @@
 #include <thrust/tuple.h>
 #include <thrust/iterator/constant_iterator.h>
 #include <thrust/adjacent_difference.h>
-
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+*/
 #include "framework/utils.hpp"
 #include "simulators/statevector/qubitvector_thrust.hpp"
 
@@ -53,6 +55,13 @@ class UnitaryMatrixThrust : public QubitVectorThrust<data_t> {
 public:
   // Type aliases
   using BaseVector = QubitVectorThrust<data_t>;
+
+	/*//Matthew Changes
+	thrust::host_vector<data_> BaseVectorThrust_Host(BaseVector.size());
+	for (int i = 0; i < BaseVector.size(); i++)
+	{
+		BaseVectorThrust_Host[i] = BaseVector[i];
+	}*/
 
   //-----------------------------------------------------------------------
   // Constructors and Destructor
@@ -230,6 +239,12 @@ void UnitaryMatrixThrust<data_t>::initialize() {
   BaseVector::zero();
   // Set to be identity matrix
   const int_t nrows = rows_;    // end for k loop
+
+  //MAtthew Changes
+  //thrust::device_vector<data_> BaseVectorThrust_Device = BaseVectorThrust_Host;
+	
+  // Here I use thrust::transform to initialise BaseVector vector with 1.0s
+
  #pragma omp parallel if (BaseVector::num_qubits_ > BaseVector::omp_threshold_ && BaseVector::omp_threads_ > 1) num_threads(BaseVector::omp_threads_)
   for (int_t k = 0; k < nrows; ++k) {
     BaseVector::data_[k * (nrows + 1)] = 1.0;

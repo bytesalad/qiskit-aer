@@ -11,6 +11,7 @@
 cmake_minimum_required(VERSION 3.6)
 file(STRINGS "qiskit/providers/aer/VERSION.txt" VERSION_NUM)
 project(qasm_simulator VERSION ${VERSION_NUM} LANGUAGES CXX C)
+project(unitary_simulator VERSION ${VERSION_NUM} LANGUAGES CXX C)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -33,8 +34,10 @@ configure_file("${PROJECT_SOURCE_DIR}/contrib/standalone/version.hpp.in"
                "${PROJECT_SOURCE_DIR}/contrib/standalone/version.hpp")
 
 set(AER_SIMULATOR_CPP_SRC_DIR "${PROJECT_SOURCE_DIR}/src")
-set(AER_SIMULATOR_CPP_MAIN
+set(AER_QASM_CPP_MAIN
     "${PROJECT_SOURCE_DIR}/contrib/standalone/qasm_simulator.cpp")
+set(AER_UNITARY_CPP_MAIN
+    "${PROJECT_SOURCE_DIR}/contrib/standalone/unitary_simulator.cpp")
 set(AER_SIMULATOR_CPP_EXTERNAL_LIBS
 	"${AER_SIMULATOR_CPP_SRC_DIR}/third-party/headers"
 	"${AER_SIMULATOR_CPP_SRC_DIR}/third-party/macos/lib"
@@ -188,7 +191,9 @@ if(AER_THRUST_BACKEND STREQUAL "CUDA")
 	message(STATUS "Thrust library: CUDA found!")
 	cuda_select_nvcc_arch_flags(AER_CUDA_ARCH Auto)
 	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -ccbin ${CMAKE_CXX_COMPILER} ${AER_CUDA_ARCH} -DAER_THRUST_CUDA -std=c++14 -I${AER_SIMULATOR_CPP_SRC_DIR} -isystem ${AER_SIMULATOR_CPP_SRC_DIR}/third-party/headers -use_fast_math --expt-extended-lambda")
-	set_source_files_properties(${AER_SIMULATOR_CPP_MAIN} PROPERTIES
+	set_source_files_properties(${AER_QASM_CPP_MAIN} PROPERTIES
+		CUDA_SOURCE_PROPERTY_FORMAT OBJ)
+	set_source_files_properties(${AER_UNITARY_CPP_MAIN} PROPERTIES
 		CUDA_SOURCE_PROPERTY_FORMAT OBJ)
 	set(THRUST_DEPENDANT_LIBS "")
 	set(AER_THRUST_SUPPORTED_DEFINITION "AER_THRUST_SUPPORTED=TRUE")
@@ -236,10 +241,14 @@ if(SKBUILD) # Terra Addon build
 	add_subdirectory(qiskit/providers/aer/backends/wrappers)
 else() # Standalone build
 	if(CUDA_FOUND)
-		cuda_add_executable(qasm_simulator ${AER_SIMULATOR_CPP_MAIN})
+		cuda_add_executable(unitary_simulator ${AER_UNITARY_CPP_MAIN})
+		target_link_libraries(unitary_simulator ${AER_LIBRARIES})
+		cuda_add_executable(qasm_simulator ${AER_QASM_CPP_MAIN})
 		target_link_libraries(qasm_simulator ${AER_LIBRARIES})
 	else(CUDA_FOUND)
-		add_executable(qasm_simulator ${AER_SIMULATOR_CPP_MAIN})
+		add_executable(unitary_simulator ${AER_UNITARY_CPP_MAIN})
+		target_link_libraries(unitary_simulator PRIVATE ${AER_LIBRARIES})
+		add_executable(qasm_simulator ${AER_QASM_CPP_MAIN})
 		target_link_libraries(qasm_simulator PRIVATE ${AER_LIBRARIES})
 	endif(CUDA_FOUND)
 
@@ -253,8 +262,20 @@ else() # Standalone build
 	target_compile_definitions(qasm_simulator PRIVATE ${AER_THRUST_SUPPORTED_DEFINITION})
 	target_compile_definitions(qasm_simulator PRIVATE ${AER_THRUST_DEVICE_SYSTEM_DEFINITION})
 
+	set_target_properties(unitary_simulator PROPERTIES
+		LINKER_LANGUAGE CXX
+		CXX_STANDARD 14)
+	set_target_properties(unitary_simulator PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY_DEBUG Debug
+		RUNTIME_OUTPUT_DIRECTORY_RELEASE Release)
+		
+	target_include_directories(unitary_simulator PRIVATE ${AER_SIMULATOR_CPP_SRC_DIR})
+	target_compile_definitions(unitary_simulator PRIVATE ${AER_THRUST_SUPPORTED_DEFINITION})
+	target_compile_definitions(unitary_simulator PRIVATE ${AER_THRUST_DEVICE_SYSTEM_DEFINITION})
+	
 	# Linter
 	# This will add the linter as part of the compiling build target
+	add_linter(unitary_simulator)
 	add_linter(qasm_simulator)
 endif()
 

@@ -12,8 +12,8 @@
  * that they have been altered from the originals.
  */
 
-#ifndef _qv_unitary_matrix_hpp_
-#define _qv_unitary_matrix_hpp_
+#ifndef _qv_unitary_matrix_thrust_hpp_
+#define _qv_unitary_matrix_thrust_hpp_
 
 /*#ifdef AER_THRUST_CUDA
 #include <cuda.h>

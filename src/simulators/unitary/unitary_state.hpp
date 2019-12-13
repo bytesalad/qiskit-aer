@@ -41,9 +41,9 @@ enum class Gates {
 //=========================================================================
 
 template <class data_t = double>
-class State : public Base::State<QV::UnitaryMatrix_Thrust<data_t>> {
+class State : public Base::State<QV::UnitaryMatrixThrust<data_t>> {
 public:
-  using BaseState = Base::State<QV::UnitaryMatrix_Thrust<data_t>>;
+  using BaseState = Base::State<QV::UnitaryMatrixThrust<data_t>>;
 
   State() = default;
   virtual ~State() = default;
@@ -88,7 +88,7 @@ public:
 
   // Initializes to a specific n-qubit unitary matrix
   virtual void initialize_qreg(uint_t num_qubits,
-                               const QV::UnitaryMatrix_Thrust<data_t> &unitary) override;
+                               const QV::UnitaryMatrixThrust<data_t> &unitary) override;
 
   // Returns the required memory for storing an n-qubit state in megabytes.
   // For this state the memory is indepdentent of the number of ops
@@ -273,7 +273,7 @@ void State<data_t>::initialize_qreg(uint_t num_qubits) {
 
 template <class data_t>
 void State<data_t>::initialize_qreg(uint_t num_qubits,
-                                    const QV::UnitaryMatrix_Thrust<data_t> &unitary) {
+                                    const QV::UnitaryMatrixThrust<data_t> &unitary) {
   // Check dimension of state
   if (unitary.num_qubits() != num_qubits) {
     throw std::invalid_argument("Unitary::State::initialize: initial state does not match qubit number");
